@@ -1,27 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Attendance</title>
+    <title>Attendance System</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h2>Attendance System</h2>
+<div class="container">
 
-<input id="emp_id" placeholder="Employee ID">
-<button onclick="loadEmployee()">Load</button><br><br>
+    <h1>Attendance Portal</h1>
+    <p class="quote">"Success starts with discipline."</p>
 
-<input id="name" placeholder="Name" readonly><br><br>
-<input id="phone" placeholder="Phone" readonly><br><br>
+    <input id="emp_id" placeholder="Enter Employee ID">
 
-<input id="otp" placeholder="OTP"><br><br>
+    <button class="load-btn" onclick="loadEmployee()">Load Employee</button>
 
-<button onclick="markAttendance('in')">IN</button>
-<button onclick="markAttendance('out')">OUT</button>
+    <input id="name" placeholder="Employee Name" readonly>
+    <input id="phone" placeholder="Phone Number" readonly>
+    <input id="otp" placeholder="Enter OTP">
 
-<div id="result"></div>
+    <div class="buttons">
+        <button class="in-btn" onclick="markAttendance('IN')">Punch IN</button>
+        <button class="out-btn" onclick="markAttendance('OUT')">Punch OUT</button>
+    </div>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+    <div id="result"></div>
+
+    <p class="footer">Created by Ajith</p>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>

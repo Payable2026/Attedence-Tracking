@@ -1,282 +1,124 @@
 body {
-
-
     margin: 0;
-
     padding: 0;
+    font-family: "Segoe UI", sans-serif;
 
-
-    font-family:
-
-        "Segoe UI",
-
-        sans-serif;
-
-
-    background:
-
-        linear-gradient(
-
-            135deg,
-
-            #00c6ff,
-
-            #0072ff
-
-        );
-
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
 
     min-height: 100vh;
 
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
 
-
     padding: 20px;
-
 }
-
 
 .container {
-
-
     width: 360px;
-
     max-width: 100%;
 
-
-    background: #f5f5f5;
-
-
+    background: #f7f7f7;
     border-radius: 28px;
 
-
-    padding: 35px 25px;
-
+    padding: 30px 22px;
 
     text-align: center;
 
-
-    box-shadow:
-
-        0 10px 30px rgba(0,0,0,0.25);
-
+    box-shadow: 0 12px 35px rgba(0,0,0,0.25);
 }
-
 
 h1 {
-
-
-    font-size: 34px;
-
-
+    font-size: 26px;
     color: #222;
-
-
-    margin-bottom: 10px;
-
-
+    margin-bottom: 5px;
     font-weight: 700;
-
-
-    line-height: 1.1;
-
 }
-
 
 .quote {
-
-
     color: #777;
-
-
     font-style: italic;
-
-
-    margin-bottom: 30px;
-
-
-    font-size: 14px;
-
+    margin-bottom: 25px;
+    font-size: 13px;
 }
-
 
 input {
-
-
     width: 100%;
+    padding: 15px;
+    margin-top: 14px;
 
-
-    padding: 16px;
-
-
-    margin-top: 16px;
-
-
-    border-radius: 16px;
-
-
-    border: 1px solid #d9d9d9;
-
-
-    background: white;
-
-
-    font-size: 15px;
-
-
-    outline: none;
-
-
-    box-sizing: border-box;
-
-}
-
-
-button {
-
-
-    width: 100%;
-
-
-    padding: 16px;
-
-
+    border-radius: 14px;
     border: none;
 
+    background: #eeeeee;
+
+    font-size: 14px;
+    outline: none;
+
+    box-sizing: border-box;
+}
+
+/* Load Button */
+.load-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    margin-top: 14px;
+
+    background: #dcdcdc;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Button Hover */
+button:hover {
+    transform: scale(1.02);
+}
+
+/* IN / OUT buttons group */
+.buttons {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.in-btn {
+    background: linear-gradient(135deg, #00c853, #64dd17);
+    color: white;
+}
+
+.out-btn {
+    background: linear-gradient(135deg, #ff3d00, #ff6f60);
+    color: white;
+}
+
+.buttons button {
+    padding: 16px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Result Card */
+#result {
+    margin-top: 25px;
+    padding: 18px;
 
     border-radius: 16px;
 
-
-    margin-top: 16px;
-
-
-    font-size: 16px;
-
-
-    font-weight: bold;
-
-
-    cursor: pointer;
-
-
-    transition: 0.3s;
-
-}
-
-
-button:hover {
-
-
-    transform: scale(1.02);
-
-}
-
-
-.buttons {
-
-
-    margin-top: 30px;
-
-
-    display: flex;
-
-
-    flex-direction: column;
-
-
-    gap: 18px;
-
-}
-
-
-.in-btn {
-
-
-    background:
-
-        linear-gradient(
-
-            135deg,
-
-            #00d84a,
-
-            #63e86d
-
-        );
-
-
-    color: white;
-
-}
-
-
-.out-btn {
-
-
-    background:
-
-        linear-gradient(
-
-            135deg,
-
-            #ff3b5f,
-
-            #ff6b81
-
-        );
-
-
-    color: white;
-
-}
-
-
-#result {
-
-
-    margin-top: 28px;
-
-
-    padding: 22px;
-
-
-    border-radius: 18px;
-
-
-    background: #eceff3;
-
+    background: #e9edf2;
 
     color: #333;
+    font-size: 15px;
 
-
-    font-size: 17px;
-
-
-    line-height: 1.8;
-
-
-    font-weight: 500;
-
-
-    text-align: center;
-
+    line-height: 1.7;
 }
 
-
+/* Footer */
 .footer {
-
-
-    margin-top: 35px;
-
-
+    margin-top: 25px;
     color: #888;
-
-
-    font-size: 13px;
-
+    font-size: 12px;
 }
