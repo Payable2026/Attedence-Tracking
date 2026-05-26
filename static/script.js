@@ -10,8 +10,33 @@ function safeGet(id) {
 /* =========================================
    SHOW STATUS
 ========================================= */
-function showStatus(message) {
-    document.getElementById("result").innerHTML = message;
+function showStatus(data, action) {
+
+    const messageText = data.message
+        ? data.message
+        : (action === "in"
+            ? "Punch IN Success ✅"
+            : "Punch OUT Success ✅");
+
+    document.getElementById("result").innerHTML = `
+        <div style="text-align:center; padding:20px;">
+
+            ✅ <b>${data.name || "-"}</b><br><br>
+
+            📢 ${messageText}<br><br>
+
+            📅 ${data.date || new Date().toLocaleDateString()}<br>
+            ⏰ ${data.time || "-"}<br><br>
+
+            📌 ${data.status || "-"}
+
+            ${data.working_hours 
+                ? `<br><br>🕒 Working Hours : ${data.working_hours}` 
+                : ""
+            }
+
+        </div>
+    `;
 }
 
 /* =========================================
@@ -117,19 +142,7 @@ function markAttendance(action) {
                 const data = await response.json();
 
                 if (data.success) {
-
-                    showStatus(`
-                        ✅ ${data.name || "-"} <br><br>
-                        📢 ${data.message || "-"} <br><br>
-                        📅 ${data.date || new Date().toLocaleDateString()} <br>
-                        ⏰ ${data.time || "-"} <br>
-                        📌 ${data.status || "-"}
-                        ${data.working_hours 
-                            ? `<br><br>🕒 Working Hours: ${data.working_hours}` 
-                            : ""
-                        }
-                    `);
-
+                    showStatus(data, action);   // ✅ FIXED HERE
                 } else {
                     alert(data.message || "Error ❌");
                 }
