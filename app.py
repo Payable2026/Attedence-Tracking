@@ -10,23 +10,22 @@ from google.oauth2.service_account import Credentials
 
 app = Flask(__name__)
 
+# ✅ Timezone
 IST = ZoneInfo("Asia/Kolkata")
 
+# ✅ Office Location
 OFFICE_LAT = 13.0566
 OFFICE_LON = 80.2541
 ALLOWED_RADIUS = 25
 
-# GOOGLE SHEETS
+# ✅ Google Scope
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-import json
-import os
-from google.oauth2.service_account import Credentials
-
-creds_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+# ✅ ✅ USE ENV VARIABLE (IMPORTANT)
+creds_dict = json.loads(os.environ.get("GOOGLE_CREDENTIALS"))
 
 creds = Credentials.from_service_account_info(
     creds_dict,
@@ -35,10 +34,11 @@ creds = Credentials.from_service_account_info(
 
 client = gspread.authorize(creds)
 
+# ✅ Sheet ID
 SHEET_ID = "1KteRJa0GenikpFQpFCBGvh6HS_jSDl-HHItrORwWRcE"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
-# LOAD EMPLOYEES
+# ✅ Load employees
 with open("employees.json", "r") as f:
     employees = json.load(f)
 
@@ -46,6 +46,7 @@ with open("employees.json", "r") as f:
 def home():
     return render_template('index.html')
 
+# ✅ Get employee
 @app.route('/get_employee', methods=['POST'])
 def get_employee():
     emp_id = request.json.get('emp_id')
@@ -60,6 +61,7 @@ def get_employee():
 
     return jsonify({'success': False})
 
+# ✅ Attendance
 @app.route('/attendance', methods=['POST'])
 def attendance():
     data = request.json
@@ -71,16 +73,18 @@ def attendance():
     action = data.get('action')
     device_id = data.get('device_id')
 
+    # Employee check
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid ID ❌'})
 
     if otp != employees[emp_id]['otp']:
         return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
+    # Location check
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
 
     if distance > ALLOWED_RADIUS:
-        return jsonify({'success': False, 'message': 'Outside office ❌'})
+        return jsonify({'success': False, 'message': 'Outside Office ❌'})
 
     now = datetime.now(IST)
     date_str = now.strftime('%d-%m-%Y')
@@ -89,18 +93,20 @@ def attendance():
     records = sheet.get_all_records()
     found_row = None
 
+    # Find today's record
     for i, rec in enumerate(records, start=2):
         if str(rec['Employee ID']) == emp_id and rec['Date'] == date_str:
             found_row = i
             break
 
+    # ✅ Punch IN
     if action == 'in':
         if found_row:
             return jsonify({'success': False, 'message': 'Already IN ✅'})
 
         sheet.append_row([
             date_str, emp_id, employees[emp_id]['name'],
-            time_str, '', 'OK', '', '', device_id
+            time_str, '', 'IN ✅', '', '', device_id
         ])
 
         return jsonify({
@@ -112,6 +118,7 @@ def attendance():
             'message': 'Punch IN Success'
         })
 
+    # ✅ Punch OUT
     elif action == 'out':
         if not found_row:
             return jsonify({'success': False, 'message': 'No IN ❌'})
@@ -144,5 +151,8 @@ def attendance():
 
     return jsonify({'success': False})
 
+
+# ✅ RUN
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
