@@ -1,7 +1,6 @@
 body {
     margin: 0;
     padding: 0;
-
     font-family: "Segoe UI", sans-serif;
 
     background: linear-gradient(135deg, #1e3c72, #2a5298);
@@ -28,6 +27,10 @@ body {
 
     text-align: center;
     color: white;
+
+    display: flex;              /* ✅ FIX */
+    flex-direction: column;
+    align-items: center;        /* ✅ CENTER ALL ITEMS */
 }
 
 /* ✅ TITLE */
@@ -43,10 +46,11 @@ h1 {
     margin-bottom: 10px;
 }
 
-/* ✅ INPUT */
+/* ✅ INPUT (CENTER FIXED) */
 input {
-    width: 100%;
+    width: 90%;              /* ✅ key fix */
     padding: 12px;
+
     margin-top: 8px;
 
     border-radius: 12px;
@@ -55,14 +59,16 @@ input {
     background: rgba(255,255,255,0.9);
 
     font-size: 14px;
+
+    display: block;
+    margin-left: auto;       /* ✅ center */
+    margin-right: auto;      /* ✅ center */
 }
 
 /* ✅ LOAD BUTTON (CENTER + SMALL 🔍) */
 .load-btn {
-    display: block;
-    width: 65%;
-
-    margin: 8px auto;   /* ✅ center */
+    width: 60%;              /* ✅ balanced size */
+    margin: 8px auto;        /* ✅ center */
 
     padding: 8px;
 
@@ -86,7 +92,9 @@ input {
 
 /* ✅ BUTTON GROUP */
 .buttons {
+    width: 90%;              /* ✅ align to inputs */
     margin-top: 10px;
+
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -126,11 +134,11 @@ button:hover {
 
 /* ✅ RESULT CARD */
 #result {
+    width: 90%;              /* ✅ align center */
     margin-top: 12px;
     padding: 15px;
 
     border-radius: 15px;
-
     background: rgba(255, 255, 255, 0.15);
 
     font-size: 14px;
