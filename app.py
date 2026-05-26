@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
+from datetime import datetime
 from geopy.distance import geodesic
 from zoneinfo import ZoneInfo
 import json
@@ -24,8 +24,11 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-# ✅ ✅ USE ENV VARIABLE (IMPORTANT)
+# ✅ ✅ ENV VARIABLE (FIXED)
 creds_dict = json.loads(os.environ.get("GOOGLE_CREDENTIALS"))
+
+# 🔥 IMPORTANT FIX (JWT Signature Error Fix)
+creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
 creds = Credentials.from_service_account_info(
     creds_dict,
@@ -73,14 +76,14 @@ def attendance():
     action = data.get('action')
     device_id = data.get('device_id')
 
-    # Employee check
+    # ✅ Employee check
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid ID ❌'})
 
     if otp != employees[emp_id]['otp']:
         return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
-    # Location check
+    # ✅ Location check
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
 
     if distance > ALLOWED_RADIUS:
@@ -93,7 +96,7 @@ def attendance():
     records = sheet.get_all_records()
     found_row = None
 
-    # Find today's record
+    # ✅ Find today's record
     for i, rec in enumerate(records, start=2):
         if str(rec['Employee ID']) == emp_id and rec['Date'] == date_str:
             found_row = i
@@ -105,8 +108,15 @@ def attendance():
             return jsonify({'success': False, 'message': 'Already IN ✅'})
 
         sheet.append_row([
-            date_str, emp_id, employees[emp_id]['name'],
-            time_str, '', 'IN ✅', '', '', device_id
+            date_str,
+            emp_id,
+            employees[emp_id]['name'],
+            time_str,
+            '',
+            'IN ✅',
+            '',
+            '',
+            device_id
         ])
 
         return jsonify({
@@ -152,7 +162,7 @@ def attendance():
     return jsonify({'success': False})
 
 
-# ✅ RUN
+# ✅ Run App
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
