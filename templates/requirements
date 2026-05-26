@@ -1,0 +1,10 @@
+Flask
+gunicorn
+gspread
+google-auth
+geopy
+numpy
+pandas
+openpyxl
+requests
+python-dotenv
