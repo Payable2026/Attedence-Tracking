@@ -1,193 +1,69 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
-
 <head>
-
-
     <meta charset="UTF-8">
-
-
-    <meta name="viewport"
-
-          content="width=device-width, initial-scale=1.0">
-
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Tracking System</title>
 
-
-    <link rel="stylesheet"
-
-          href="{{ url_for('static', filename='style.css') }}">
-
-
+    <!-- ✅ FIXED CSS LINK -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 
 <body>
 
+<div class="container">
 
-    <div class="container">
+    <h1>Attendance Tracking System</h1>
 
+    <div class="quote">
+        “Success starts with discipline.”
+    </div>
 
-        <h1>
+    <!-- EMPLOYEE ID -->
+    <input type="text" id="emp_id" placeholder="Employee ID">
 
-            Attendance Tracking System
+    <!-- ✅ LOAD BUTTON -->
+    <button class="load-btn" onclick="loadEmployee()">
+        🔍 Load
+    </button>
 
-        </h1>
+    <!-- EMPLOYEE DETAILS -->
+    <input type="text" id="name" placeholder="Employee Name" readonly>
 
+    <input type="text" id="phone" placeholder="Phone Number" readonly>
 
-        <div class="quote">
+    <input type="text" value="Chennai Office" readonly>
 
-            “Success starts with discipline.”
+    <!-- OTP -->
+    <input type="text" id="otp" placeholder="Enter OTP">
 
-        </div>
+    <!-- BUTTONS -->
+    <div class="buttons">
 
-
-        <!-- EMPLOYEE ID -->
-
-
-        <input
-
-            type="text"
-
-            id="emp_id"
-
-            placeholder="Employee ID">
-
-
-        <!-- LOAD BUTTON -->
-
-
-        <button
-
-            type="button"
-
-            onclick="loadEmployee()">
-
-
-            Load Employee
-
-
+        <button class="in-btn" onclick="markAttendance('in')">
+            Punch IN
         </button>
 
-
-        <!-- EMPLOYEE DETAILS -->
-
-
-        <input
-
-            type="text"
-
-            id="name"
-
-            placeholder="Employee Name"
-
-            readonly>
-
-
-        <input
-
-            type="text"
-
-            id="phone"
-
-            placeholder="Phone Number"
-
-            readonly>
-
-
-        <input
-
-            type="text"
-
-            value="Chennai Office"
-
-            readonly>
-
-
-        <!-- OTP -->
-
-
-        <input
-
-            type="text"
-
-            id="otp"
-
-            placeholder="Enter OTP">
-
-
-        <!-- BUTTONS -->
-
-
-        <div class="buttons">
-
-
-            <button
-
-                type="button"
-
-                class="in-btn"
-
-                onclick="markAttendance('in')">
-
-
-                Punch IN
-
-
-            </button>
-
-
-            <button
-
-                type="button"
-
-                class="out-btn"
-
-                onclick="markAttendance('out')">
-
-
-                Punch OUT
-
-
-            </button>
-
-
-        </div>
-
-
-        <!-- RESULT -->
-
-
-        <div id="result">
-
-
-            Waiting for Action...
-
-
-        </div>
-
-
-        <!-- FOOTER -->
-
-
-        <div class="footer">
-
-
-            Created By Ajith MIS
-
-
-        </div>
-
+        <button class="out-btn" onclick="markAttendance('out')">
+            Punch OUT
+        </button>
 
     </div>
 
+    <!-- RESULT -->
+    <div id="result">
+        Waiting for Action...
+    </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- FOOTER -->
+    <div class="footer">
+        Created By Ajith MIS
+    </div>
 
+</div>
+
+<!-- ✅ FIXED JS LINK -->
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
-
-</html>html ok
+</html>
