@@ -1,106 +1,193 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
+
 <head>
+
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <meta name="viewport"
+
+          content="width=device-width, initial-scale=1.0">
+
+
     <title>Attendance Tracking System</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+
+          href="{{ url_for('static', filename='style.css') }}">
+
+
 </head>
+
 
 <body>
 
-<div class="container">
 
-    <!-- TITLE -->
-    <h1>Attendance Tracking System</h1>
+    <div class="container">
 
-    <div class="quote">
-        “Success starts with discipline.”
-    </div>
 
-    <!-- EMPLOYEE ID -->
-    <input
-        type="text"
-        id="emp_id"
-        placeholder="Employee ID"
-    >
+        <h1>
 
-    <!-- LOAD BUTTON -->
-    <button
-        type="button"
-        class="load-btn"
-        onclick="loadEmployee()"
-    >
-        Load Employee
-    </button>
+            Attendance Tracking System
 
-    <!-- EMPLOYEE DETAILS -->
-    <input
-        type="text"
-        id="name"
-        placeholder="Employee Name"
-        readonly
-    >
+        </h1>
 
-    <input
-        type="text"
-        id="phone"
-        placeholder="Phone Number"
-        readonly
-    >
 
-    <input
-        type="text"
-        id="location"
-        value="Chennai Office"
-        readonly
-    >
+        <div class="quote">
 
-    <!-- OTP -->
-    <input
-        type="text"
-        id="otp"
-        placeholder="Enter OTP"
-    >
+            “Success starts with discipline.”
 
-    <!-- BUTTONS -->
-    <div class="buttons">
+        </div>
+
+
+        <!-- EMPLOYEE ID -->
+
+
+        <input
+
+            type="text"
+
+            id="emp_id"
+
+            placeholder="Employee ID">
+
+
+        <!-- LOAD BUTTON -->
+
 
         <button
+
             type="button"
-            class="in-btn"
-            onclick="markAttendance('in')"
-        >
-            ✅ Punch IN
+
+            onclick="loadEmployee()">
+
+
+            Load Employee
+
+
         </button>
 
-        <button
-            type="button"
-            class="out-btn"
-            onclick="markAttendance('out')"
-        >
-            ❌ Punch OUT
-        </button>
+
+        <!-- EMPLOYEE DETAILS -->
+
+
+        <input
+
+            type="text"
+
+            id="name"
+
+            placeholder="Employee Name"
+
+            readonly>
+
+
+        <input
+
+            type="text"
+
+            id="phone"
+
+            placeholder="Phone Number"
+
+            readonly>
+
+
+        <input
+
+            type="text"
+
+            value="Chennai Office"
+
+            readonly>
+
+
+        <!-- OTP -->
+
+
+        <input
+
+            type="text"
+
+            id="otp"
+
+            placeholder="Enter OTP">
+
+
+        <!-- BUTTONS -->
+
+
+        <div class="buttons">
+
+
+            <button
+
+                type="button"
+
+                class="in-btn"
+
+                onclick="markAttendance('in')">
+
+
+                Punch IN
+
+
+            </button>
+
+
+            <button
+
+                type="button"
+
+                class="out-btn"
+
+                onclick="markAttendance('out')">
+
+
+                Punch OUT
+
+
+            </button>
+
+
+        </div>
+
+
+        <!-- RESULT -->
+
+
+        <div id="result">
+
+
+            Waiting for Action...
+
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+
+        <div class="footer">
+
+
+            Created By Ajith MIS
+
+
+        </div>
+
 
     </div>
 
-    <!-- RESULT -->
-    <div id="result">
-        Waiting for Action...
-    </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-        Created By Ajith MIS
-    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 
-</div>
-
-<!-- JS -->
-<script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
+
 </html>

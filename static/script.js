@@ -1,135 +1,409 @@
-console.log("✅ Script Loaded");
+console.log("Script Loaded Successfully");
+
 
 /* =========================================
+
    SAFE GET
+
 ========================================= */
+
+
 function safeGet(id) {
+
+
     return document.getElementById(id)?.value || "";
+
 }
 
+
 /* =========================================
-   SHOW MESSAGE
+
+   SHOW STATUS
+
 ========================================= */
-function show(msg) {
-    document.getElementById("result").innerHTML = msg;
+
+
+function showStatus(message) {
+
+
+    document.getElementById(
+
+        "result"
+
+    ).innerHTML = message;
+
 }
 
+
 /* =========================================
-   DEVICE ID (IMPROVED)
+
+   DEVICE ID
+
 ========================================= */
-function deviceId() {
 
-    let id = localStorage.getItem("dev");
 
-    if (!id) {
-        id = "DEV-" + Math.random().toString(36).substring(2) + Date.now();
-        localStorage.setItem("dev", id);
+function getDeviceId() {
+
+
+    let deviceId =
+
+        localStorage.getItem(
+
+            "device_id"
+
+        );
+
+
+    if (!deviceId) {
+
+
+        deviceId =
+
+            'DEV-' +
+
+            Math.random()
+
+            .toString(36)
+
+            .substring(2) +
+
+            Date.now();
+
+
+        localStorage.setItem(
+
+            "device_id",
+
+            deviceId
+
+        );
+
     }
 
-    return id;
+
+    return deviceId;
+
 }
 
+
 /* =========================================
+
    LOAD EMPLOYEE
+
 ========================================= */
+
+
 async function loadEmployee() {
 
-    const emp_id = safeGet("emp_id");
 
-    if (!emp_id) {
-        alert("Employee ID required ❌");
+    const empId =
+
+        safeGet("emp_id");
+
+
+    if (!empId) {
+
+
+        alert(
+
+            "Employee ID required ❌"
+
+        );
+
+
         return;
+
     }
+
 
     try {
-        let res = await fetch("/get_employee", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ emp_id })
-        });
 
-        let data = await res.json();
+
+        const response =
+
+            await fetch(
+
+                "/get_employee",
+
+                {
+
+                    method: "POST",
+
+
+                    headers: {
+
+                        "Content-Type":
+
+                            "application/json"
+
+                    },
+
+
+                    body: JSON.stringify({
+
+                        emp_id: empId
+
+                    })
+
+                }
+
+            );
+
+
+        const data =
+
+            await response.json();
+
 
         if (data.success) {
-            document.getElementById("name").value = data.name;
-            document.getElementById("phone").value = data.phone;
+
+
+            document.getElementById(
+
+                "name"
+
+            ).value = data.name;
+
+
+            document.getElementById(
+
+                "phone"
+
+            ).value = data.phone;
+
+
         } else {
-            alert("Employee not found ❌");
+
+
+            alert(
+
+                "Employee not found ❌"
+
+            );
+
         }
 
+
     } catch (err) {
+
+
         console.error(err);
+
+
         alert("Server error ❌");
+
     }
+
 }
 
+
 /* =========================================
+
    MARK ATTENDANCE
+
 ========================================= */
+
+
 function markAttendance(action) {
 
-    const emp_id = safeGet("emp_id");
-    const otp = safeGet("otp");
+
+    const emp_id =
+
+        safeGet("emp_id");
+
+
+    const otp =
+
+        safeGet("otp");
+
 
     if (!emp_id) {
-        alert("Employee ID required ❌");
+
+
+        alert(
+
+            "Employee ID required ❌"
+
+        );
+
+
         return;
+
     }
+
 
     if (!otp) {
-        alert("OTP required ❌");
+
+
+        alert(
+
+            "OTP required ❌"
+
+        );
+
+
         return;
+
     }
 
+
     if (!navigator.geolocation) {
-        alert("Geolocation not supported ❌");
+
+
+        alert(
+
+            "Geolocation not supported ❌"
+
+        );
+
+
         return;
+
     }
+
 
     navigator.geolocation.getCurrentPosition(
 
-        async (pos) => {
+
+        async function(position) {
+
+
+            const lat =
+
+                position.coords.latitude;
+
+
+            const lon =
+
+                position.coords.longitude;
+
+
+            const device_id =
+
+                getDeviceId();
+
 
             try {
 
-                let res = await fetch("/attendance", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        emp_id,
-                        otp,
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude,
-                        action,
-                        device_id: deviceId()
-                    })
-                });
 
-                let data = await res.json();
+                const response =
+
+                    await fetch(
+
+                        '/attendance',
+
+                        {
+
+                            method: 'POST',
+
+
+                            headers: {
+
+                                'Content-Type':
+
+                                    'application/json'
+
+                            },
+
+
+                            body: JSON.stringify({
+
+
+                                emp_id,
+
+                                otp,
+
+                                lat,
+
+                                lon,
+
+                                action,
+
+                                device_id
+
+                            })
+
+                        }
+
+                    );
+
+
+                const data =
+
+                    await response.json();
+
 
                 if (data.success) {
-                    show(`
-                        ✅ ${data.name || ""} <br>
-                        ${data.message} <br>
-                        📅 ${data.date} <br>
-                        ⏰ ${data.time} <br>
+
+
+                    showStatus(
+
+
+                        `✅ ${data.name}<br>
+
+
+                        ${data.message}<br>
+
+
+                        📅 ${data.date}<br>
+
+
+                        ⏰ ${data.time}<br>
+
+
                         📌 ${data.status}
-                        ${data.working_hours ? `<br><br>🕒 ${data.working_hours}` : ""}
-                    `);
+
+
+                        ${data.working_hours
+
+                            ? `<br><br>🕒 Working Hours : ${data.working_hours}`
+
+                            : ""}`
+
+                    );
+
+
                 } else {
-                    alert(data.message);
+
+
+                    alert(
+
+                        data.message
+
+                    );
+
                 }
 
-            } catch (err) {
+
+            } catch(err) {
+
+
                 console.error(err);
-                alert("Server error ❌");
+
+
+                alert(
+
+                    "Server error ❌"
+
+                );
+
             }
+
 
         },
 
-        (error) => {
-            alert("Location permission required ❌");
+
+        function(error) {
+
+
+            alert(
+
+                "Location permission required ❌"
+
+            );
+
         }
 
     );
+
 }
