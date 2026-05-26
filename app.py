@@ -235,11 +235,14 @@ def attendance():
         sheet.update_cell(found_row, 8, working_hours)
 
         return jsonify({
-            'success': True,
-            'time': time_str,
-            'status': out_status,
-            'working_hours': working_hours
-        })
+    'success': True,
+    'name': employee['name'],   # ✅ ADD THIS LINE
+    'date': date_str,           # ✅ ADD THIS
+    'time': time_str,
+    'status': out_status,
+    'working_hours': working_hours,
+    'message': 'Punch OUT Success ✅'   # ✅ ADD THIS
+})
 
     return jsonify({'success': False, 'message': 'Invalid Action ❌'})
 
