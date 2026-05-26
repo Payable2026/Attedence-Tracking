@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Attendance System</title>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracking System</title>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -10,28 +14,54 @@
 
 <div class="container">
 
-    <h1>Attendance Portal</h1>
-    <p class="quote">"Success starts with discipline."</p>
+    <h1>Attendance Tracking System</h1>
 
-    <input id="emp_id" placeholder="Enter Employee ID">
-
-    <button class="load-btn" onclick="loadEmployee()">Load Employee</button>
-
-    <input id="name" placeholder="Employee Name" readonly>
-    <input id="phone" placeholder="Phone Number" readonly>
-    <input id="otp" placeholder="Enter OTP">
-
-    <div class="buttons">
-        <button class="in-btn" onclick="markAttendance('IN')">Punch IN</button>
-        <button class="out-btn" onclick="markAttendance('OUT')">Punch OUT</button>
+    <div class="quote">
+        “Success starts with discipline.”
     </div>
 
-    <div id="result"></div>
+    <!-- EMPLOYEE ID -->
+    <input type="text" id="emp_id" placeholder="Employee ID">
 
-    <p class="footer">Created by Ajith</p>
+    <!-- LOAD BUTTON -->
+    <button type="button" class="load-btn" onclick="loadEmployee()">
+        Load Employee
+    </button>
+
+    <!-- EMPLOYEE DETAILS -->
+    <input type="text" id="name" placeholder="Employee Name" readonly>
+    <input type="text" id="phone" placeholder="Phone Number" readonly>
+    <input type="text" id="location" value="Chennai Office" readonly>
+
+    <!-- OTP -->
+    <input type="text" id="otp" placeholder="Enter OTP">
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+
+        <button type="button" class="in-btn" onclick="markAttendance('IN')">
+            ✅ Punch IN
+        </button>
+
+        <button type="button" class="out-btn" onclick="markAttendance('OUT')">
+            ❌ Punch OUT
+        </button>
+
+    </div>
+
+    <!-- RESULT -->
+    <div id="result">
+        Waiting for Action...
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        Created By Ajith MIS
+    </div>
 
 </div>
 
+<!-- JS -->
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
