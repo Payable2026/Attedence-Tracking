@@ -57,19 +57,22 @@ input {
     font-size: 14px;
 }
 
-/* ✅ LOAD BUTTON (COMPACT 🔍) */
+/* ✅ LOAD BUTTON (CENTER + SMALL 🔍) */
 .load-btn {
-    width: 100%;
-    padding: 8px;          /* ✅ SMALL */
-    margin-top: 6px;
+    display: block;
+    width: 65%;
 
-    border-radius: 12px;
+    margin: 8px auto;   /* ✅ center */
+
+    padding: 8px;
+
+    border-radius: 20px;
     border: none;
 
-    font-size: 13px;       /* ✅ SMALL TEXT */
+    font-size: 13px;
     font-weight: bold;
 
-    background: rgba(255,255,255,0.95);
+    background: white;
     color: #222;
 
     cursor: pointer;
@@ -77,8 +80,8 @@ input {
 }
 
 .load-btn:hover {
-    transform: scale(1.02);
-    background: white;
+    background: #f0f0f0;
+    transform: scale(1.05);
 }
 
 /* ✅ BUTTON GROUP */
@@ -101,6 +104,7 @@ button {
     font-size: 15px;
 
     cursor: pointer;
+    transition: 0.2s;
 }
 
 /* ✅ PUNCH IN */
@@ -115,12 +119,12 @@ button {
     color: white;
 }
 
-/* ✅ HOVER EFFECT */
+/* ✅ HOVER */
 button:hover {
     transform: scale(1.03);
 }
 
-/* ✅ RESULT */
+/* ✅ RESULT CARD */
 #result {
     margin-top: 12px;
     padding: 15px;
