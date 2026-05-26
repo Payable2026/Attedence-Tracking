@@ -55,7 +55,7 @@ client = gspread.authorize(creds)
 # =========================================
 # GOOGLE SHEET
 # =========================================
-SHEET_ID = "1Ryj_plY3dJ6v9ZCE_QJXuR7vXdFHqFOHWwJb0ODQ6Js"
+SHEET_ID = "1KteRJa0GenikpFQpFCBGvh6HS_jSDl-HHItrORwWRcE"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
 # =========================================
