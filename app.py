@@ -61,7 +61,7 @@ sheet = client.open_by_key(SHEET_ID).sheet1
 # =========================================
 # EMPLOYEES
 # =========================================
-with open("employees.json", "r") as f:
+with open("employees.json", "r", encoding="utf-8") as f:
     employees = json.load(f)
 
 # =========================================
