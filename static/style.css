@@ -4,144 +4,118 @@ body {
 
     font-family: "Segoe UI", sans-serif;
 
-    background: linear-gradient(135deg, #00c6ff, #0072ff);
-
-    min-height: 100vh;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
 
     display: flex;
     justify-content: center;
     align-items: center;
 
-    padding: 10px;   /* 🔽 reduced */
+    min-height: 100vh;
 }
 
+/* ✅ MAIN CARD */
 .container {
     width: 360px;
     max-width: 100%;
 
-    background: #f5f5f5;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
 
-    border-radius: 20px;   /* slight reduce */
+    border-radius: 25px;
+    padding: 20px;
 
-    padding: 18px 15px;    /* 🔽 reduced */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 
     text-align: center;
-
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    color: white;
 }
 
-/* ✅ Title */
+/* ✅ TITLE */
 h1 {
-    font-size: 22px;       /* 🔽 smaller */
-    color: #222;
+    font-size: 22px;
     margin-bottom: 5px;
-    font-weight: 600;
-    line-height: 1.2;
 }
 
-/* ✅ Quote */
+/* ✅ QUOTE */
 .quote {
-    color: #777;
-    font-style: italic;
-    margin-bottom: 10px;   /* 🔽 reduced */
     font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 10px;
 }
 
-/* ✅ Inputs */
+/* ✅ INPUT */
 input {
     width: 100%;
+    padding: 12px;
 
-    padding: 12px;   /* 🔽 reduced */
-
-    margin-top: 8px; /* 🔽 reduced */
+    margin-top: 8px;
 
     border-radius: 12px;
-
-    border: 1px solid #d9d9d9;
-
-    background: white;
-
-    font-size: 14px;
-
-    outline: none;
-
-    box-sizing: border-box;
-}
-
-/* ✅ Buttons */
-button {
-    width: 100%;
-
-    padding: 12px; /* 🔽 reduced */
-
     border: none;
 
-    border-radius: 14px;
+    background: rgba(255,255,255,0.9);
 
-    margin-top: 10px; /* 🔽 reduced */
+    font-size: 14px;
+}
 
-    font-size: 15px;
+/* ✅ BUTTONS */
+button {
+    width: 100%;
+    padding: 12px;
+
+    border: none;
+    border-radius: 30px;
 
     font-weight: bold;
+    font-size: 15px;
 
     cursor: pointer;
 
-    transition: 0.2s;
+    transition: 0.3s;
 }
 
-button:hover {
-    transform: scale(1.01); /* subtle */
-}
-
-/* ✅ Button group */
+/* ✅ BUTTON SPACE FIX */
 .buttons {
-    margin-top: 10px; /* 🔽 reduced */
-
+    margin-top: 10px;
     display: flex;
-
     flex-direction: column;
-
-    gap: 10px; /* 🔽 reduced */
+    gap: 10px;
 }
 
-/* ✅ Punch IN */
+/* ✅ PUNCH IN BUTTON */
 .in-btn {
-    background: linear-gradient(135deg, #00d84a, #63e86d);
-    color: white;
+    background: linear-gradient(135deg, #00ff7f, #00c853);
+    color: #000;
 }
 
-/* ✅ Punch OUT */
+/* ✅ PUNCH OUT BUTTON */
 .out-btn {
-    background: linear-gradient(135deg, #ff3b5f, #ff6b81);
+    background: linear-gradient(135deg, #ff4e50, #f44336);
     color: white;
 }
 
-/* ✅ RESULT BOX */
-#result {
-    margin-top: 12px;   /* 🔽 reduced */
+/* ✅ HOVER EFFECT */
+button:hover {
+    transform: scale(1.05);
+}
 
-    padding: 14px;      /* 🔽 reduced */
+/* ✅ RESULT CARD */
+#result {
+    margin-top: 12px;
+    padding: 15px;
 
     border-radius: 15px;
 
-    background: #eceff3;
+    background: rgba(255, 255, 255, 0.15);
 
-    color: #333;
+    font-size: 14px;
 
-    font-size: 14px;   /* 🔽 reduced */
-
-    line-height: 1.6;
-
-    font-weight: 500;
-
-    text-align: center;
+    backdrop-filter: blur(5px);
 }
 
-/* ✅ Footer */
+/* ✅ FOOTER */
 .footer {
-    margin-top: 12px;  /* 🔽 reduced */
-
-    color: #888;
-
+    margin-top: 10px;
     font-size: 12px;
+    opacity: 0.7;
 }
