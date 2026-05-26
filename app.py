@@ -22,8 +22,14 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_file(
-    "service_account.json",
+import json
+import os
+from google.oauth2.service_account import Credentials
+
+creds_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+
+creds = Credentials.from_service_account_info(
+    creds_dict,
     scopes=scope
 )
 
