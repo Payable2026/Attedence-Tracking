@@ -164,7 +164,7 @@ def attendance():
             })
 
     # =======================
-    # PUNCH IN
+    # PUNCH INf
     # =======================
     if action == 'in':
 
