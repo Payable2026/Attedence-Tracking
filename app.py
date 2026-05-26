@@ -1,0 +1,142 @@
+from flask import Flask, render_template, request, jsonify
+from datetime import datetime, timedelta
+from geopy.distance import geodesic
+from zoneinfo import ZoneInfo
+import json
+import gspread
+import os
+
+from google.oauth2.service_account import Credentials
+
+app = Flask(__name__)
+
+IST = ZoneInfo("Asia/Kolkata")
+
+OFFICE_LAT = 13.0566
+OFFICE_LON = 80.2541
+ALLOWED_RADIUS = 25
+
+# GOOGLE SHEETS
+scope = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = Credentials.from_service_account_file(
+    "service_account.json",
+    scopes=scope
+)
+
+client = gspread.authorize(creds)
+
+SHEET_ID = "1KteRJa0GenikpFQpFCBGvh6HS_jSDl-HHItrORwWRcE"
+sheet = client.open_by_key(SHEET_ID).sheet1
+
+# LOAD EMPLOYEES
+with open("employees.json", "r") as f:
+    employees = json.load(f)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/get_employee', methods=['POST'])
+def get_employee():
+    emp_id = request.json.get('emp_id')
+
+    if emp_id in employees:
+        emp = employees[emp_id]
+        return jsonify({
+            'success': True,
+            'name': emp['name'],
+            'phone': emp['phone']
+        })
+
+    return jsonify({'success': False})
+
+@app.route('/attendance', methods=['POST'])
+def attendance():
+    data = request.json
+
+    emp_id = data.get('emp_id')
+    otp = data.get('otp')
+    lat = float(data.get('lat'))
+    lon = float(data.get('lon'))
+    action = data.get('action')
+    device_id = data.get('device_id')
+
+    if emp_id not in employees:
+        return jsonify({'success': False, 'message': 'Invalid ID ❌'})
+
+    if otp != employees[emp_id]['otp']:
+        return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
+
+    distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
+
+    if distance > ALLOWED_RADIUS:
+        return jsonify({'success': False, 'message': 'Outside office ❌'})
+
+    now = datetime.now(IST)
+    date_str = now.strftime('%d-%m-%Y')
+    time_str = now.strftime('%I:%M %p')
+
+    records = sheet.get_all_records()
+    found_row = None
+
+    for i, rec in enumerate(records, start=2):
+        if str(rec['Employee ID']) == emp_id and rec['Date'] == date_str:
+            found_row = i
+            break
+
+    if action == 'in':
+        if found_row:
+            return jsonify({'success': False, 'message': 'Already IN ✅'})
+
+        sheet.append_row([
+            date_str, emp_id, employees[emp_id]['name'],
+            time_str, '', 'OK', '', '', device_id
+        ])
+
+        return jsonify({
+            'success': True,
+            'name': employees[emp_id]['name'],
+            'date': date_str,
+            'time': time_str,
+            'status': 'IN ✅',
+            'message': 'Punch IN Success'
+        })
+
+    elif action == 'out':
+        if not found_row:
+            return jsonify({'success': False, 'message': 'No IN ❌'})
+
+        if sheet.cell(found_row, 5).value:
+            return jsonify({'success': False, 'message': 'Already OUT ✅'})
+
+        in_time = sheet.cell(found_row, 4).value
+
+        in_dt = datetime.strptime(in_time, '%I:%M %p')
+        out_dt = datetime.strptime(time_str, '%I:%M %p')
+
+        diff = out_dt - in_dt
+        hrs = diff.seconds // 3600
+        mins = (diff.seconds % 3600) // 60
+
+        work = f"{hrs} hrs {mins} mins"
+
+        sheet.update_cell(found_row, 5, time_str)
+        sheet.update_cell(found_row, 8, work)
+
+        return jsonify({
+            'success': True,
+            'date': date_str,
+            'time': time_str,
+            'status': 'OUT ✅',
+            'working_hours': work,
+            'message': 'Punch OUT Success'
+        })
+
+    return jsonify({'success': False})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
