@@ -24,7 +24,7 @@ IST = ZoneInfo("Asia/Kolkata")
 # =========================================
 OFFICE_LAT = 13.056600
 OFFICE_LON = 80.2541370
-ALLOWED_RADIUS = 35
+ALLOWED_RADIUS = 25
 
 # =========================================
 # GOOGLE SHEETS AUTH (FROM YOUR SECOND CODE)
