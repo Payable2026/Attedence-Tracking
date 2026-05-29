@@ -100,15 +100,15 @@ async function loadEmployee() {
 function markAttendance(action) {
 
     const emp_id = safeGet("emp_id");
-    const Year_of_birth = safeGet("Year_of_birth");
+    const otp = safeGet("otp");
 
     if (!emp_id) {
         alert("Employee ID required ❌");
         return;
     }
 
-    if (!Year_of_birth) {
-        alert("Year_of_birth required ❌");
+    if (!otp) {
+        alert("otp required ❌");
         return;
     }
 
@@ -131,7 +131,7 @@ function markAttendance(action) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         emp_id,
-                        Year_of_birth,
+                        otp,
                         lat,
                         lon,
                         action,
