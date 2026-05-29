@@ -112,7 +112,7 @@ def attendance():
     data = request.json
 
     emp_id = data.get('emp_id')
-    otp = data.get('otp')
+    Year_of_birth = data.get('Year_of_birth')
     lat = float(data.get('lat'))
     lon = float(data.get('lon'))
     action = data.get('action')
@@ -124,9 +124,9 @@ def attendance():
 
     employee = employees[emp_id]
 
-    # OTP CHECK
-    if otp.strip() != employee['otp']:
-        return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
+    # Year_of_birth CHECK
+    if Year_of_birth.strip() != employee['Year_of_birth']:
+        return jsonify({'success': False, 'message': 'Wrong Year_of_birth❌'})
 
     # LOCATION CHECK
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
