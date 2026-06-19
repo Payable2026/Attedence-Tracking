@@ -9,7 +9,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-# ✅ NEW GOOGLE AUTH
 from google.oauth2.service_account import Credentials
 
 app = Flask(__name__)
@@ -24,10 +23,10 @@ IST = ZoneInfo("Asia/Kolkata")
 # =========================================
 OFFICE_LAT = 13.056600
 OFFICE_LON = 80.2541370
-ALLOWED_RADIUS = 27
+DEFAULT_RADIUS = 27   # ✅ fallback radius
 
 # =========================================
-# GOOGLE SHEETS AUTH (FROM YOUR SECOND CODE)
+# GOOGLE SHEETS AUTH
 # =========================================
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -105,7 +104,7 @@ def live_count():
     return jsonify({'count': count})
 
 # =========================================
-# ATTENDANCE (FIRST CODE FULL LOGIC ✅)
+# ATTENDANCE
 # =========================================
 @app.route('/attendance', methods=['POST'])
 def attendance():
@@ -118,26 +117,28 @@ def attendance():
     action = data.get('action')
     device_id = data.get('device_id')
 
-    # EMPLOYEE CHECK
+    # ✅ EMPLOYEE CHECK
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid Employee ID ❌'})
 
     employee = employees[emp_id]
 
-    # otp CHECK
+    # ✅ OTP CHECK
     if otp.strip() != employee['otp']:
-        return jsonify({'success': False, 'message': 'Wrong otp❌'})
+        return jsonify({'success': False, 'message': 'Wrong otp ❌'})
 
-    # LOCATION CHECK
+    # ✅ DYNAMIC RADIUS (IMPORTANT CHANGE ⭐)
+    emp_radius = employee.get('radius', DEFAULT_RADIUS)
+
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
 
-    if distance > ALLOWED_RADIUS:
+    if distance > emp_radius:
         return jsonify({
             'success': False,
-            'message': f'Outside Office Radius ({int(distance)}m) ❌'
+            'message': f'Outside Allowed Radius ({int(distance)}m > {emp_radius}m) ❌'
         })
 
-    # TIME
+    # ✅ TIME
     now = datetime.now(IST)
     date_str = now.strftime('%d-%m-%Y')
     time_str = now.strftime('%I:%M %p')
@@ -145,13 +146,13 @@ def attendance():
     records = sheet.get_all_records()
     found_row = None
 
-    # FIND RECORD
+    # ✅ FIND RECORD
     for i, rec in enumerate(records, start=2):
         if str(rec['Employee ID']) == emp_id and rec['Date'] == date_str:
             found_row = i
             break
 
-    # DEVICE CHECK
+    # ✅ DEVICE CHECK
     for rec in records:
         if (
             rec.get('Device ID') == device_id and
@@ -164,7 +165,7 @@ def attendance():
             })
 
     # =======================
-    # PUNCH INf
+    # ✅ PUNCH IN
     # =======================
     if action == 'in':
 
@@ -194,7 +195,7 @@ def attendance():
         })
 
     # =======================
-    # PUNCH OUT
+    # ✅ PUNCH OUT
     # =======================
     elif action == 'out':
 
@@ -235,16 +236,17 @@ def attendance():
         sheet.update_cell(found_row, 8, working_hours)
 
         return jsonify({
-    'success': True,
-    'name': employee['name'],   # ✅ ADD THIS LINE
-    'date': date_str,           # ✅ ADD THIS
-    'time': time_str,
-    'status': out_status,
-    'working_hours': working_hours,
-    'message': 'Punch OUT Success ✅'   # ✅ ADD THIS
-})
+            'success': True,
+            'name': employee['name'],
+            'date': date_str,
+            'time': time_str,
+            'status': out_status,
+            'working_hours': working_hours,
+            'message': 'Punch OUT Success ✅'
+        })
 
     return jsonify({'success': False, 'message': 'Invalid Action ❌'})
+
 
 # =========================================
 # RUN
