@@ -23,7 +23,7 @@ IST = ZoneInfo("Asia/Kolkata")
 # =========================================
 OFFICE_LAT = 13.056600
 OFFICE_LON = 80.2541370
-DEFAULT_RADIUS = 35   # ✅ fallback radius
+DEFAULT_RADIUS = 35
 
 # =========================================
 # GOOGLE SHEETS AUTH
@@ -125,11 +125,10 @@ def attendance():
 
     # ✅ OTP CHECK
     if otp.strip() != employee['otp']:
-        return jsonify({'success': False, 'message': 'Wrong otp ❌'})
+        return jsonify({'success': False, 'message': 'Wrong Year ❌'})
 
-    # ✅ DYNAMIC RADIUS (IMPORTANT CHANGE ⭐)
+    # ✅ LOCATION CHECK
     emp_radius = employee.get('radius', DEFAULT_RADIUS)
-
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
 
     if distance > emp_radius:
@@ -138,7 +137,6 @@ def attendance():
             'message': f'Outside Allowed Radius ({int(distance)}m > {emp_radius}m) ❌'
         })
 
-    # ✅ TIME
     now = datetime.now(IST)
     date_str = now.strftime('%d-%m-%Y')
     time_str = now.strftime('%I:%M %p')
@@ -146,7 +144,7 @@ def attendance():
     records = sheet.get_all_records()
     found_row = None
 
-    # ✅ FIND RECORD
+    # ✅ FIND TODAY RECORD
     for i, rec in enumerate(records, start=2):
         if str(rec['Employee ID']) == emp_id and rec['Date'] == date_str:
             found_row = i
@@ -164,83 +162,88 @@ def attendance():
                 'message': 'This Mobile Already Used Today ❌'
             })
 
-    # =======================
+    # ======================
     # ✅ PUNCH IN
-    # =======================
+    # ======================
     if action == 'in':
 
-        if found_row:
-            return jsonify({'success': False, 'message': 'Already Punched IN ✅'})
-
-        current_minutes = now.hour * 60 + now.minute
-        office_in = 9 * 60
-        grace_limit = office_in + 5
-
-        if current_minutes <= grace_limit:
-            in_status = 'On Time ✅'
+        if not found_row:
+            # First punch
+            sheet.append_row([
+                date_str, emp_id, employee['name'],
+                time_str, '', 'On Time ✅', '', '', device_id
+            ])
         else:
-            late = current_minutes - office_in
-            in_status = f'{late} mins Late ⏰'
+            # Prevent double IN without OUT
+            in_times = (sheet.cell(found_row, 4).value or "").split(" / ")
+            out_times = (sheet.cell(found_row, 5).value or "").split(" / ")
 
-        sheet.append_row([
-            date_str, emp_id, employee['name'],
-            time_str, '', in_status, '', '', device_id
-        ])
+            if len(in_times) > len(out_times):
+                return jsonify({
+                    'success': False,
+                    'message': 'Already IN, please Punch OUT first ❌'
+                })
+
+            existing_in = sheet.cell(found_row, 4).value or ""
+            new_in = existing_in + " / " + time_str if existing_in else time_str
+            sheet.update_cell(found_row, 4, new_in)
 
         return jsonify({
             'success': True,
             'name': employee['name'],
             'time': time_str,
-            'status': in_status
+            'message': 'Punch IN Success ✅'
         })
 
-    # =======================
+    # ======================
     # ✅ PUNCH OUT
-    # =======================
+    # ======================
     elif action == 'out':
 
         if not found_row:
             return jsonify({'success': False, 'message': 'Punch IN Not Found ❌'})
 
-        if sheet.cell(found_row, 5).value:
-            return jsonify({'success': False, 'message': 'Already Punched OUT ✅'})
+        in_times = (sheet.cell(found_row, 4).value or "").split(" / ")
+        out_times = (sheet.cell(found_row, 5).value or "").split(" / ")
 
-        in_time = sheet.cell(found_row, 4).value
+        if len(out_times) >= len(in_times):
+            return jsonify({
+                'success': False,
+                'message': 'Already OUT, please Punch IN first ❌'
+            })
 
-        in_dt = datetime.strptime(in_time.strip(), '%I:%M %p')
-        out_dt = datetime.strptime(time_str.strip(), '%I:%M %p')
+        # ✅ Append OUT
+        existing_out = sheet.cell(found_row, 5).value or ""
+        new_out = existing_out + " / " + time_str if existing_out else time_str
+        sheet.update_cell(found_row, 5, new_out)
 
-        if out_dt < in_dt:
-            out_dt += timedelta(days=1)
+        # ✅ CALCULATE TOTAL WORKING HOURS
+        in_times = sheet.cell(found_row, 4).value.split(" / ")
+        out_times = sheet.cell(found_row, 5).value.split(" / ")
 
-        diff = out_dt - in_dt
-        hrs = diff.seconds // 3600
-        mins = (diff.seconds % 3600) // 60
+        total_minutes = 0
+
+        for i in range(min(len(in_times), len(out_times))):
+            in_dt = datetime.strptime(in_times[i].strip(), '%I:%M %p')
+            out_dt = datetime.strptime(out_times[i].strip(), '%I:%M %p')
+
+            if out_dt < in_dt:
+                out_dt += timedelta(days=1)
+
+            diff = out_dt - in_dt
+            total_minutes += diff.seconds // 60
+
+        hrs = total_minutes // 60
+        mins = total_minutes % 60
+
         working_hours = f"{hrs} hrs {mins} mins"
 
-        current_minutes = now.hour * 60 + now.minute
-        office_out = 17 * 60 + 30
-        grace_out = office_out + 20
-
-        if current_minutes < office_out:
-            early = office_out - current_minutes
-            out_status = f'{early} mins Early Exit 🚶'
-        elif current_minutes <= grace_out:
-            out_status = 'On Time Exit ✅'
-        else:
-            extra = current_minutes - office_out
-            out_status = f'{extra} mins Additional Stay 🔥'
-
-        sheet.update_cell(found_row, 5, time_str)
-        sheet.update_cell(found_row, 7, out_status)
         sheet.update_cell(found_row, 8, working_hours)
 
         return jsonify({
             'success': True,
             'name': employee['name'],
-            'date': date_str,
             'time': time_str,
-            'status': out_status,
             'working_hours': working_hours,
             'message': 'Punch OUT Success ✅'
         })
