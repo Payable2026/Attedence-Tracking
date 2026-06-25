@@ -26,7 +26,7 @@ OFFICE_LON = 80.2541370
 DEFAULT_RADIUS = 35
 
 # =========================================
-# GOOGLE SHEETS AUTH
+# GOOGLE SHEET SETUP
 # =========================================
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -38,22 +38,12 @@ creds_raw = os.environ.get("GOOGLE_CREDENTIALS")
 if creds_raw:
     creds_dict = json.loads(creds_raw)
     creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-
-    creds = Credentials.from_service_account_info(
-        creds_dict,
-        scopes=scope
-    )
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 else:
-    creds = Credentials.from_service_account_file(
-        "service_account.json",
-        scopes=scope
-    )
+    creds = Credentials.from_service_account_file("service_account.json", scopes=scope)
 
 client = gspread.authorize(creds)
 
-# =========================================
-# GOOGLE SHEET
-# =========================================
 SHEET_ID = "1KteRJa0GenikpFQpFCBGvh6HS_jSDl-HHItrORwWRcE"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
@@ -71,27 +61,6 @@ def home():
     return render_template('index.html')
 
 # =========================================
-# GET EMPLOYEE
-# =========================================
-@app.route('/get_employee', methods=['POST'])
-def get_employee():
-    data = request.json
-    emp_id = data.get('emp_id')
-
-    if emp_id in employees:
-        emp = employees[emp_id]
-        return jsonify({
-            'success': True,
-            'name': emp['name'],
-            'phone': emp['phone']
-        })
-
-    return jsonify({
-        'success': False,
-        'message': 'Employee Not Found ❌'
-    })
-
-# =========================================
 # ATTENDANCE
 # =========================================
 @app.route('/attendance', methods=['POST'])
@@ -104,18 +73,18 @@ def attendance():
     lat = float(data.get('lat'))
     lon = float(data.get('lon'))
     action = data.get('action')
-    device_id = data.get('device_id')
 
-    # ✅ VALIDATION
+    # ✅ CHECK EMPLOYEE
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid Employee ❌'})
 
     employee = employees[emp_id]
 
+    # ✅ OTP
     if otp.strip() != employee['otp']:
         return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
-    # ✅ LOCATION CHECK
+    # ✅ LOCATION
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
     if distance > employee.get('radius', DEFAULT_RADIUS):
         return jsonify({'success': False, 'message': 'Outside Radius ❌'})
@@ -141,6 +110,7 @@ def attendance():
         office_in = 9 * 60
         grace = office_in + 5
 
+        # ✅ STATUS
         if current_minutes <= grace:
             in_status = 'On Time ✅'
         else:
@@ -148,20 +118,29 @@ def attendance():
             in_status = f'{late} mins Late ⏰'
 
         if not found_row:
-            # ✅ First IN
+            # ✅ FIRST IN
+            sessions = [[time_str]]
             sheet.append_row([
                 date_str, emp_id, employee['name'],
-                time_str, '', in_status, '', '', json.dumps([])
+                time_str, '', in_status, '', '', json.dumps(sessions)
             ])
         else:
-            sessions = json.loads(sheet.cell(found_row, 9).value or "[]")
+            raw = sheet.cell(found_row, 9).value
 
-            # prevent double IN
+            try:
+                sessions = json.loads(raw) if raw else []
+            except:
+                sessions = []
+
+            # ✅ prevent double IN
             if len(sessions) > 0 and len(sessions[-1]) == 1:
                 return jsonify({'success': False, 'message': 'Already IN ❌'})
 
             sessions.append([time_str])
             sheet.update_cell(found_row, 9, json.dumps(sessions))
+
+            # ✅ update ONLY first IN remains same
+            sheet.update_cell(found_row, 6, in_status)
 
         return jsonify({'success': True, 'message': 'IN Success ✅'})
 
@@ -173,22 +152,28 @@ def attendance():
         if not found_row:
             return jsonify({'success': False, 'message': 'No IN Found ❌'})
 
-        sessions = json.loads(sheet.cell(found_row, 9).value or "[]")
+        raw = sheet.cell(found_row, 9).value
 
+        try:
+            sessions = json.loads(raw) if raw else []
+        except:
+            sessions = []
+
+        # ✅ prevent double OUT
         if len(sessions) == 0 or len(sessions[-1]) == 2:
             return jsonify({'success': False, 'message': 'Already OUT ❌'})
 
-        # ✅ Add OUT to last session
+        # ✅ add OUT
         sessions[-1].append(time_str)
         sheet.update_cell(found_row, 9, json.dumps(sessions))
 
-        # ✅ CALCULATE WORK
+        # ✅ CALCULATE HOURS
         total_minutes = 0
 
-        for i in sessions:
-            if len(i) == 2:
-                in_dt = datetime.strptime(i[0], '%I:%M %p')
-                out_dt = datetime.strptime(i[1], '%I:%M %p')
+        for s in sessions:
+            if len(s) == 2:
+                in_dt = datetime.strptime(s[0], '%I:%M %p')
+                out_dt = datetime.strptime(s[1], '%I:%M %p')
 
                 if out_dt < in_dt:
                     out_dt += timedelta(days=1)
@@ -196,12 +181,11 @@ def attendance():
                 diff = out_dt - in_dt
                 total_minutes += diff.seconds // 60
 
-        # ✅ TOTAL HOURS
         hrs = total_minutes // 60
         mins = total_minutes % 60
         working_hours = f"{hrs} hrs {mins} mins"
 
-        # ✅ FIRST IN & LAST OUT
+        # ✅ FIRST IN + LAST OUT
         first_in = sessions[0][0]
         last_out = sessions[-1][1]
 
@@ -228,10 +212,10 @@ def attendance():
         })
 
     return jsonify({'success': False})
-    
+
 
 # =========================================
 # RUN
 # =========================================
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
