@@ -189,7 +189,7 @@ def attendance():
 
     if now_min < office_out:
         out_status = f"{office_out - now_min} mins Early Exit 🚶"
-    elif now_min <= office_out + 20:
+    elif now_min <= office_out + 60:
         out_status = "On Time Exit ✅"
     else:
         out_status = f"{now_min - office_out} mins Extra Stay 🔥"
