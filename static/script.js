@@ -1,22 +1,13 @@
 console.log("✅ Script Loaded Successfully");
 
-/* =========================================
-   SAFE GET
-========================================= */
 function safeGet(id) {
     return document.getElementById(id)?.value || "";
 }
 
-/* =========================================
-   SHOW STATUS
-========================================= */
 function showStatus(data, action) {
 
-    const messageText = data.message
-        ? data.message
-        : (action === "in"
-            ? "Punch IN Success ✅"
-            : "Punch OUT Success ✅");
+    const messageText = data.message || 
+        (action === "in" ? "Punch IN ✅" : "Punch OUT ✅");
 
     document.getElementById("result").innerHTML = `
         <div style="text-align:center; padding:20px;">
@@ -39,28 +30,17 @@ function showStatus(data, action) {
     `;
 }
 
-/* =========================================
-   DEVICE ID
-========================================= */
 function getDeviceId() {
-
     let deviceId = localStorage.getItem("device_id");
 
     if (!deviceId) {
-        deviceId =
-            "DEV-" +
-            Math.random().toString(36).substring(2) +
-            Date.now();
-
+        deviceId = "DEV-" + Math.random().toString(36).substring(2) + Date.now();
         localStorage.setItem("device_id", deviceId);
     }
 
     return deviceId;
 }
 
-/* =========================================
-   LOAD EMPLOYEE
-========================================= */
 async function loadEmployee() {
 
     const empId = safeGet("emp_id");
@@ -70,93 +50,56 @@ async function loadEmployee() {
         return;
     }
 
-    try {
-        const response = await fetch("/get_employee", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ emp_id: empId })
-        });
+    const response = await fetch("/get_employee", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ emp_id: empId })
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.success) {
-            document.getElementById("name").value = data.name || "";
-            document.getElementById("phone").value = data.phone || "";
-        } else {
-            alert(data.message || "Employee not found ❌");
-        }
-
-    } catch (err) {
-        console.error(err);
-        alert("Server error ❌");
+    if (data.success) {
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("phone").value = data.phone || "";
+    } else {
+        alert(data.message || "Not found ❌");
     }
 }
 
-/* =========================================
-   MARK ATTENDANCE
-========================================= */
 function markAttendance(action) {
 
     const emp_id = safeGet("emp_id");
     const otp = safeGet("otp");
 
-    if (!emp_id) {
-        alert("Employee ID required ❌");
+    if (!emp_id || !otp) {
+        alert("Fill required fields ❌");
         return;
     }
 
-    if (!otp) {
-        alert("otp required ❌");
-        return;
-    }
+    navigator.geolocation.getCurrentPosition(async function(pos) {
 
-    if (!navigator.geolocation) {
-        alert("Geolocation not supported ❌");
-        return;
-    }
+        const response = await fetch('/attendance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                emp_id,
+                otp,
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                action,
+                device_id: getDeviceId()
+            })
+        });
 
-    navigator.geolocation.getCurrentPosition(
+        const data = await response.json();
 
-        async function (position) {
-
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            const device_id = getDeviceId();
-
-            try {
-                const response = await fetch('/attendance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        emp_id,
-                        otp,
-                        lat,
-                        lon,
-                        action,
-                        device_id
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showStatus(data, action);   // ✅ FIXED HERE
-                } else {
-                    alert(data.message || "Error ❌");
-                }
-
-            } catch (err) {
-                console.error(err);
-                alert("Server error ❌");
-            }
-
-        },
-
-        function () {
-            alert("Location permission required ❌");
+        if (data.success) {
+            showStatus(data, action);
+        } else {
+            alert(data.message);
         }
 
-    );
+    }, function() {
+        alert("Allow location ❌");
+    });
 }

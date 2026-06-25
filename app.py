@@ -74,7 +74,6 @@ def get_employee():
 
     return jsonify({'success': False, 'message': 'Employee Not Found ❌'})
 
-
 # =========================================
 # ATTENDANCE
 # =========================================
@@ -88,13 +87,11 @@ def attendance():
     lon = float(data.get('lon'))
     device_id = data.get('device_id')
 
-    # ✅ Employee check
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid Employee ❌'})
 
     emp = employees[emp_id]
 
-    # ✅ OTP
     if otp.strip() != emp['otp']:
         return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
@@ -147,22 +144,20 @@ def attendance():
         return jsonify({
             'success': True,
             'message': 'Punch IN ✅',
-            'time': time_str
+            'time': time_str,
+            'name': emp['name'],
+            'date': date_str,
+            'status': in_status
         })
 
     # =====================================
-    # ✅ OUT / UPDATE OUT
+    # ✅ OUT / UPDATE
     # =====================================
     in_time = rec_data.get('In Time')
     existing_out = rec_data.get('Out Time')
 
-    if not in_time:
-        return jsonify({'success': False, 'message': 'Invalid IN ❌'})
-
-    # ✅ Update OUT TIME
     sheet.update_cell(row_index, 5, time_str)
 
-    # ✅ Time calc
     in_dt = datetime.strptime(in_time.strip(), '%I:%M %p')
     out_dt = datetime.strptime(time_str.strip(), '%I:%M %p')
 
@@ -174,16 +169,6 @@ def attendance():
     mins = (diff.seconds % 3600) // 60
     working_hours = f"{hrs} hrs {mins} mins"
 
-    # ✅ IN status (fixed)
-    first_min = in_dt.hour * 60 + in_dt.minute
-    office_in = 9 * 60
-
-    if first_min <= office_in + 5:
-        in_status = "On Time ✅"
-    else:
-        in_status = f"{first_min - office_in} mins Late ⏰"
-
-    # ✅ OUT status
     now_min = now.hour * 60 + now.minute
     office_out = 17 * 60 + 30
 
@@ -194,22 +179,20 @@ def attendance():
     else:
         out_status = f"{now_min - office_out} mins Extra Stay 🔥"
 
-    # ✅ Update sheet
-    sheet.update_cell(row_index, 6, in_status)
     sheet.update_cell(row_index, 7, out_status)
     sheet.update_cell(row_index, 8, working_hours)
 
-    # ✅ Message fix
     msg = "Punch OUT ✅" if not existing_out else "OUT Updated ✅"
 
     return jsonify({
         'success': True,
         'message': msg,
-        'out_time': time_str,
-        'working_hours': working_hours,
-        'status': out_status
+        'time': time_str,   # ✅ unified key
+        'name': emp['name'],
+        'date': date_str,
+        'status': out_status,
+        'working_hours': working_hours
     })
-
 
 # =========================================
 # RUN
