@@ -33,7 +33,6 @@ creds_raw = os.environ.get("GOOGLE_CREDENTIALS")
 if creds_raw:
     creds_dict = json.loads(creds_raw)
     creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 else:
     creds = Credentials.from_service_account_file("service_account.json", scopes=scope)
@@ -64,8 +63,7 @@ def home():
 # =========================================
 @app.route('/get_employee', methods=['POST'])
 def get_employee():
-    data = request.json
-    emp_id = data.get('emp_id')
+    emp_id = request.json.get('emp_id')
 
     if emp_id in employees:
         return jsonify({
@@ -76,8 +74,9 @@ def get_employee():
 
     return jsonify({'success': False, 'message': 'Employee Not Found ❌'})
 
+
 # =========================================
-# ATTENDANCE MAIN LOGIC
+# ATTENDANCE
 # =========================================
 @app.route('/attendance', methods=['POST'])
 def attendance():
@@ -89,25 +88,20 @@ def attendance():
     lon = float(data.get('lon'))
     device_id = data.get('device_id')
 
-    # ✅ Employee validation
+    # ✅ Employee check
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid Employee ❌'})
 
-    employee = employees[emp_id]
+    emp = employees[emp_id]
 
-    # ✅ OTP validation
-    if otp.strip() != employee['otp']:
+    # ✅ OTP
+    if otp.strip() != emp['otp']:
         return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
-    # ✅ Location validation
-    emp_radius = employee.get('radius', DEFAULT_RADIUS)
+    # ✅ Location check
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
-
-    if distance > emp_radius:
-        return jsonify({
-            'success': False,
-            'message': f'Outside Radius ({int(distance)}m > {emp_radius}m) ❌'
-        })
+    if distance > emp.get('radius', DEFAULT_RADIUS):
+        return jsonify({'success': False, 'message': f'Outside Radius {int(distance)}m ❌'})
 
     now = datetime.now(IST)
     date_str = now.strftime('%d-%m-%Y')
@@ -115,13 +109,9 @@ def attendance():
 
     records = sheet.get_all_records()
 
-    # ✅ Device restriction (same day)
+    # ✅ Device restriction
     for rec in records:
-        if (
-            rec.get('Device ID') == device_id and
-            str(rec['Employee ID']) != emp_id and
-            rec['Date'] == date_str
-        ):
+        if rec.get('Device ID') == device_id and str(rec['Employee ID']) != emp_id and rec['Date'] == date_str:
             return jsonify({'success': False, 'message': 'Device already used ❌'})
 
     # =====================================
@@ -137,21 +127,20 @@ def attendance():
             break
 
     # =====================================
-    # ✅ FIRST PUNCH → IN
+    # ✅ FIRST PUNCH (IN)
     # =====================================
-    if not row_index:
+    if row_index is None:
 
-        current_minutes = now.hour * 60 + now.minute
+        minutes = now.hour * 60 + now.minute
         office_in = 9 * 60
 
-        if current_minutes <= office_in + 5:
+        if minutes <= office_in + 5:
             in_status = "On Time ✅"
         else:
-            late = current_minutes - office_in
-            in_status = f"{late} mins Late ⏰"
+            in_status = f"{minutes - office_in} mins Late ⏰"
 
         sheet.append_row([
-            date_str, emp_id, employee['name'],
+            date_str, emp_id, emp['name'],
             time_str, '', in_status, '', '0 hrs 0 mins', device_id
         ])
 
@@ -162,14 +151,15 @@ def attendance():
         })
 
     # =====================================
-    # ✅ NEXT PUNCH → UPDATE OUT ONLY
+    # ✅ OUT / UPDATE OUT
     # =====================================
-    in_time = rec_data['In Time']
+    in_time = rec_data.get('In Time')
+    existing_out = rec_data.get('Out Time')
 
     if not in_time:
         return jsonify({'success': False, 'message': 'Invalid IN ❌'})
 
-    # ✅ Update OUT TIME (overwrite)
+    # ✅ Update OUT TIME
     sheet.update_cell(row_index, 5, time_str)
 
     # ✅ Time calc
@@ -184,44 +174,45 @@ def attendance():
     mins = (diff.seconds % 3600) // 60
     working_hours = f"{hrs} hrs {mins} mins"
 
-    # ✅ IN STATUS (fixed)
-    first_minutes = in_dt.hour * 60 + in_dt.minute
+    # ✅ IN status (fixed)
+    first_min = in_dt.hour * 60 + in_dt.minute
     office_in = 9 * 60
 
-    if first_minutes <= office_in + 5:
+    if first_min <= office_in + 5:
         in_status = "On Time ✅"
     else:
-        late = first_minutes - office_in
-        in_status = f"{late} mins Late ⏰"
+        in_status = f"{first_min - office_in} mins Late ⏰"
 
-    # ✅ OUT STATUS (based on latest punch)
-    current_minutes = now.hour * 60 + now.minute
+    # ✅ OUT status
+    now_min = now.hour * 60 + now.minute
     office_out = 17 * 60 + 30
 
-    if current_minutes < office_out:
-        early = office_out - current_minutes
-        out_status = f"{early} mins Early Exit 🚶"
-    elif current_minutes <= office_out + 20:
+    if now_min < office_out:
+        out_status = f"{office_out - now_min} mins Early Exit 🚶"
+    elif now_min <= office_out + 20:
         out_status = "On Time Exit ✅"
     else:
-        extra = current_minutes - office_out
-        out_status = f"{extra} mins Additional Stay 🔥"
+        out_status = f"{now_min - office_out} mins Extra Stay 🔥"
 
-    # ✅ Update row
+    # ✅ Update sheet
     sheet.update_cell(row_index, 6, in_status)
     sheet.update_cell(row_index, 7, out_status)
     sheet.update_cell(row_index, 8, working_hours)
 
+    # ✅ Message fix
+    msg = "Punch OUT ✅" if not existing_out else "OUT Updated ✅"
+
     return jsonify({
         'success': True,
-        'message': 'OUT Updated ✅',
+        'message': msg,
         'out_time': time_str,
         'working_hours': working_hours,
         'status': out_status
     })
 
+
 # =========================================
 # RUN
 # =========================================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
