@@ -59,11 +59,13 @@ function getDeviceId() {
 }
 
 /* =========================================
-   LOAD EMPLOYEE
+   ✅ LOAD EMPLOYEE (FIXED)
 ========================================= */
 async function loadEmployee() {
 
-    const empId = safeGet("emp_id");
+    const empId = safeGet("emp_id").trim();  // ✅ IMPORTANT
+
+    console.log("EMP ID:", empId);
 
     if (!empId) {
         alert("Employee ID required ❌");
@@ -79,7 +81,14 @@ async function loadEmployee() {
             body: JSON.stringify({ emp_id: empId })
         });
 
+        // ✅ Handle server error response
+        if (!response.ok) {
+            throw new Error("Server response not OK");
+        }
+
         const data = await response.json();
+
+        console.log("Response:", data);
 
         if (data.success) {
             document.getElementById("name").value = data.name || "";
@@ -89,18 +98,18 @@ async function loadEmployee() {
         }
 
     } catch (err) {
-        console.error(err);
+        console.error("LOAD ERROR:", err);
         alert("Server error ❌");
     }
 }
 
 /* =========================================
-   MARK ATTENDANCE
+   ✅ MARK ATTENDANCE
 ========================================= */
 function markAttendance(action) {
 
-    const emp_id = safeGet("emp_id");
-    const otp = safeGet("otp");
+    const emp_id = safeGet("emp_id").trim();
+    const otp = safeGet("otp").trim();
 
     if (!emp_id) {
         alert("Employee ID required ❌");
@@ -108,7 +117,7 @@ function markAttendance(action) {
     }
 
     if (!otp) {
-        alert("otp required ❌");
+        alert("OTP required ❌");
         return;
     }
 
@@ -139,16 +148,23 @@ function markAttendance(action) {
                     })
                 });
 
+                // ✅ Check response
+                if (!response.ok) {
+                    throw new Error("Attendance API error");
+                }
+
                 const data = await response.json();
 
+                console.log("Attendance Response:", data);
+
                 if (data.success) {
-                    showStatus(data, action);   // ✅ FIXED HERE
+                    showStatus(data, action);
                 } else {
                     alert(data.message || "Error ❌");
                 }
 
             } catch (err) {
-                console.error(err);
+                console.error("ATTENDANCE ERROR:", err);
                 alert("Server error ❌");
             }
 
@@ -157,6 +173,5 @@ function markAttendance(action) {
         function () {
             alert("Location permission required ❌");
         }
-
     );
 }

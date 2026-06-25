@@ -26,7 +26,7 @@ OFFICE_LON = 80.2541370
 DEFAULT_RADIUS = 35
 
 # =========================================
-# GOOGLE SHEETS SETUP
+# GOOGLE SHEETS
 # =========================================
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -61,31 +61,53 @@ def home():
     return render_template('index.html')
 
 # =========================================
-# ATTENDANCE
+# ✅ GET EMPLOYEE (FIXED - NO ERROR)
+# =========================================
+@app.route('/get_employee', methods=['POST'])
+def get_employee():
+
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({'success': False, 'message': 'No data ❌'})
+
+    emp_id = str(data.get('emp_id')).strip()
+
+    if not emp_id or emp_id == "None":
+        return jsonify({'success': False, 'message': 'Enter Employee ID ❌'})
+
+    if emp_id in employees:
+        emp = employees[emp_id]
+        return jsonify({
+            'success': True,
+            'name': emp.get('name'),
+            'phone': emp.get('phone')
+        })
+
+    return jsonify({'success': False, 'message': 'Employee Not Found ❌'})
+
+# =========================================
+# ✅ ATTENDANCE
 # =========================================
 @app.route('/attendance', methods=['POST'])
 def attendance():
 
-    # ✅ SAFE JSON LOAD
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({'success': False, 'message': 'No data received ❌'})
+        return jsonify({'success': False, 'message': 'No data ❌'})
 
     emp_id = str(data.get('emp_id')).strip()
     otp = str(data.get('otp')).strip()
-    
-    # ✅ EMP ID CHECK
-    if not emp_id or emp_id == "None":
-        return jsonify({'success': False, 'message': 'Employee ID required ❌'})
 
-    # ✅ EMPLOYEE VALIDATE
+    if not emp_id:
+        return jsonify({'success': False, 'message': 'Employee ID missing ❌'})
+
     if emp_id not in employees:
         return jsonify({'success': False, 'message': 'Invalid Employee ❌'})
 
     employee = employees[emp_id]
 
-    # ✅ OTP CHECK
     if otp != employee['otp']:
         return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
@@ -94,9 +116,14 @@ def attendance():
         lat = float(data.get('lat'))
         lon = float(data.get('lon'))
     except:
-        return jsonify({'success': False, 'message': 'Invalid location ❌'})
+        return jsonify({'success': False, 'message': 'Invalid Location ❌'})
+
+    from math import isnan
+    if isnan(lat) or isnan(lon):
+        return jsonify({'success': False, 'message': 'Invalid Coordinates ❌'})
 
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
+
     if distance > employee.get('radius', DEFAULT_RADIUS):
         return jsonify({'success': False, 'message': 'Outside Radius ❌'})
 
@@ -170,13 +197,11 @@ def attendance():
         if len(sessions) == 0 or len(sessions[-1]) == 2:
             return jsonify({'success': False, 'message': 'Already OUT ❌'})
 
-        # ✅ ADD OUT
         sessions[-1].append(time_str)
         sheet.update_cell(found_row, 9, json.dumps(sessions))
 
-        # ✅ CALCULATE HOURS
+        # ✅ WORK CALC
         total_minutes = 0
-
         for s in sessions:
             if len(s) == 2:
                 in_dt = datetime.strptime(s[0], '%I:%M %p')
@@ -185,14 +210,13 @@ def attendance():
                 if out_dt < in_dt:
                     out_dt += timedelta(days=1)
 
-                diff = out_dt - in_dt
-                total_minutes += diff.seconds // 60
+                total_minutes += (out_dt - in_dt).seconds // 60
 
         hrs = total_minutes // 60
         mins = total_minutes % 60
         working_hours = f"{hrs} hrs {mins} mins"
 
-        # ✅ FIRST IN / LAST OUT
+        # ✅ FIRST IN LAST OUT
         first_in = sessions[0][0]
         last_out = sessions[-1][1]
 
@@ -224,5 +248,5 @@ def attendance():
 # =========================================
 # RUN
 # =========================================
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
