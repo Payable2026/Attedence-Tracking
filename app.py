@@ -92,22 +92,11 @@ def get_employee():
     })
 
 # =========================================
-# LIVE COUNT
-# =========================================
-@app.route('/live_count')
-def live_count():
-    records = sheet.get_all_records()
-    today = datetime.now(IST).strftime('%d-%m-%Y')
-
-    count = sum(1 for r in records if r['Date'] == today)
-
-    return jsonify({'count': count})
-
-# =========================================
 # ATTENDANCE
 # =========================================
 @app.route('/attendance', methods=['POST'])
 def attendance():
+
     data = request.json
 
     emp_id = data.get('emp_id')
@@ -117,25 +106,19 @@ def attendance():
     action = data.get('action')
     device_id = data.get('device_id')
 
-    # ✅ EMPLOYEE CHECK
+    # ✅ VALIDATION
     if emp_id not in employees:
-        return jsonify({'success': False, 'message': 'Invalid Employee ID ❌'})
+        return jsonify({'success': False, 'message': 'Invalid Employee ❌'})
 
     employee = employees[emp_id]
 
-    # ✅ OTP CHECK
     if otp.strip() != employee['otp']:
-        return jsonify({'success': False, 'message': 'Wrong Year ❌'})
+        return jsonify({'success': False, 'message': 'Wrong OTP ❌'})
 
     # ✅ LOCATION CHECK
-    emp_radius = employee.get('radius', DEFAULT_RADIUS)
     distance = geodesic((OFFICE_LAT, OFFICE_LON), (lat, lon)).meters
-
-    if distance > emp_radius:
-        return jsonify({
-            'success': False,
-            'message': f'Outside Allowed Radius ({int(distance)}m > {emp_radius}m) ❌'
-        })
+    if distance > employee.get('radius', DEFAULT_RADIUS):
+        return jsonify({'success': False, 'message': 'Outside Radius ❌'})
 
     now = datetime.now(IST)
     date_str = now.strftime('%d-%m-%Y')
@@ -144,56 +127,43 @@ def attendance():
     records = sheet.get_all_records()
     found_row = None
 
-    # ✅ FIND TODAY RECORD
     for i, rec in enumerate(records, start=2):
         if str(rec['Employee ID']) == emp_id and rec['Date'] == date_str:
             found_row = i
             break
-
-    # ✅ DEVICE CHECK
-    for rec in records:
-        if (
-            rec.get('Device ID') == device_id and
-            str(rec['Employee ID']) != emp_id and
-            rec['Date'] == date_str
-        ):
-            return jsonify({
-                'success': False,
-                'message': 'This Mobile Already Used Today ❌'
-            })
 
     # ======================
     # ✅ PUNCH IN
     # ======================
     if action == 'in':
 
+        current_minutes = now.hour * 60 + now.minute
+        office_in = 9 * 60
+        grace = office_in + 5
+
+        if current_minutes <= grace:
+            in_status = 'On Time ✅'
+        else:
+            late = current_minutes - office_in
+            in_status = f'{late} mins Late ⏰'
+
         if not found_row:
-            # First punch
+            # ✅ First IN
             sheet.append_row([
                 date_str, emp_id, employee['name'],
-                time_str, '', 'On Time ✅', '', '', device_id
+                time_str, '', in_status, '', '', json.dumps([])
             ])
         else:
-            # Prevent double IN without OUT
-            in_times = (sheet.cell(found_row, 4).value or "").split(" / ")
-            out_times = (sheet.cell(found_row, 5).value or "").split(" / ")
+            sessions = json.loads(sheet.cell(found_row, 9).value or "[]")
 
-            if len(in_times) > len(out_times):
-                return jsonify({
-                    'success': False,
-                    'message': 'Already IN, please Punch OUT first ❌'
-                })
+            # prevent double IN
+            if len(sessions) > 0 and len(sessions[-1]) == 1:
+                return jsonify({'success': False, 'message': 'Already IN ❌'})
 
-            existing_in = sheet.cell(found_row, 4).value or ""
-            new_in = existing_in + " / " + time_str if existing_in else time_str
-            sheet.update_cell(found_row, 4, new_in)
+            sessions.append([time_str])
+            sheet.update_cell(found_row, 9, json.dumps(sessions))
 
-        return jsonify({
-            'success': True,
-            'name': employee['name'],
-            'time': time_str,
-            'message': 'Punch IN Success ✅'
-        })
+        return jsonify({'success': True, 'message': 'IN Success ✅'})
 
     # ======================
     # ✅ PUNCH OUT
@@ -201,62 +171,67 @@ def attendance():
     elif action == 'out':
 
         if not found_row:
-            return jsonify({'success': False, 'message': 'Punch IN Not Found ❌'})
+            return jsonify({'success': False, 'message': 'No IN Found ❌'})
 
-        in_times = (sheet.cell(found_row, 4).value or "").split(" / ")
-        out_times = (sheet.cell(found_row, 5).value or "").split(" / ")
+        sessions = json.loads(sheet.cell(found_row, 9).value or "[]")
 
-        if len(out_times) >= len(in_times):
-            return jsonify({
-                'success': False,
-                'message': 'Already OUT, please Punch IN first ❌'
-            })
+        if len(sessions) == 0 or len(sessions[-1]) == 2:
+            return jsonify({'success': False, 'message': 'Already OUT ❌'})
 
-        # ✅ Append OUT
-        existing_out = sheet.cell(found_row, 5).value or ""
-        new_out = existing_out + " / " + time_str if existing_out else time_str
-        sheet.update_cell(found_row, 5, new_out)
+        # ✅ Add OUT to last session
+        sessions[-1].append(time_str)
+        sheet.update_cell(found_row, 9, json.dumps(sessions))
 
-        # ✅ CALCULATE TOTAL WORKING HOURS
-        in_times = sheet.cell(found_row, 4).value.split(" / ")
-        out_times = sheet.cell(found_row, 5).value.split(" / ")
-
+        # ✅ CALCULATE WORK
         total_minutes = 0
 
-        for i in range(min(len(in_times), len(out_times))):
-            in_dt = datetime.strptime(in_times[i].strip(), '%I:%M %p')
-            out_dt = datetime.strptime(out_times[i].strip(), '%I:%M %p')
+        for i in sessions:
+            if len(i) == 2:
+                in_dt = datetime.strptime(i[0], '%I:%M %p')
+                out_dt = datetime.strptime(i[1], '%I:%M %p')
 
-            if out_dt < in_dt:
-                out_dt += timedelta(days=1)
+                if out_dt < in_dt:
+                    out_dt += timedelta(days=1)
 
-            diff = out_dt - in_dt
-            total_minutes += diff.seconds // 60
+                diff = out_dt - in_dt
+                total_minutes += diff.seconds // 60
 
+        # ✅ TOTAL HOURS
         hrs = total_minutes // 60
         mins = total_minutes % 60
-
         working_hours = f"{hrs} hrs {mins} mins"
 
+        # ✅ FIRST IN & LAST OUT
+        first_in = sessions[0][0]
+        last_out = sessions[-1][1]
+
+        sheet.update_cell(found_row, 4, first_in)
+        sheet.update_cell(found_row, 5, last_out)
         sheet.update_cell(found_row, 8, working_hours)
+
+        # ✅ OUT STATUS
+        current_minutes = now.hour * 60 + now.minute
+        office_out = 17 * 60 + 30
+
+        if current_minutes < office_out:
+            early = office_out - current_minutes
+            out_status = f'{early} mins Early Exit 🚶'
+        else:
+            out_status = 'On Time Exit ✅'
+
+        sheet.update_cell(found_row, 7, out_status)
 
         return jsonify({
             'success': True,
-            'name': employee['name'],
-            'time': time_str,
             'working_hours': working_hours,
-            'message': 'Punch OUT Success ✅'
+            'message': 'OUT Success ✅'
         })
 
-    return jsonify({'success': False, 'message': 'Invalid Action ❌'})
-
+    return jsonify({'success': False})
+    
 
 # =========================================
 # RUN
 # =========================================
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
-        debug=True
-    )
+    app.run(host="0.0.0.0", port=5000, debug=True)
