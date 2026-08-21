@@ -35,7 +35,7 @@
   "1433": { "name": "👩‍💼 Sivasree R", "phone": "📞 N/A", "otp": "2004" },
   "1525": { "name": "👩‍💼 Pragathi S", "phone": "📞 N/A", "otp": "2004" },
   "1492": { "name": "👩‍💼 Shenbagavalli B", "phone": "📞 N/A", "otp": "2004"},
-  "1399": { "name": "👩‍💼 Anjana PS", "phone": "📞 N/A", "otp": "2002"},
+  "1399": { "name": "👩‍💼 Anjana PS", "phone": "📞 N/A", "otp": "2002", "radius": 60},
   "1526": { "name": "👩‍💼 Thija C", "phone": "📞 N/A", "otp": "2001"},
   "1461": { "name": "👩‍💼 Madhumitha S", "phone": "📞 N/A", "otp": "2005"},
   "1524": { "name": "👩‍💼 Shalini Priya", "phone": "📞 N/A", "otp": "1999"},
