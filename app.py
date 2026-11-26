@@ -134,7 +134,7 @@ def attendance():
         if minutes <= office_in + 5:
             in_status = "On Time ✅"
         else:
-            in_status = f"{minutes - office_in} mins Late ⏰"
+            in_status = f"{minutes - office_in} mins Late da sopulangi paiya ⏰"
 
         sheet.append_row([
             date_str, emp_id, emp['name'],
